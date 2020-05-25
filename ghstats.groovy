@@ -46,7 +46,9 @@ def getData(HTTPBuilder http, String url) {
     }
  
    response.failure = { resp ->
+        println "Something went wrong:\n"
         println resp.getAllHeaders()
+        System.exit(1)
    }
 }
 
