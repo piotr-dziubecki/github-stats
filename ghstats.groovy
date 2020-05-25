@@ -15,6 +15,7 @@ def userRepos
 def loginMap = [:]
 
 
+
 def Properties properties = new Properties()
 File propertiesFile = new File('auth.properties')
 propertiesFile.withInputStream {
@@ -59,6 +60,9 @@ return ur
 repoURL = 'http://api.github.com/users/' + userName + '/repos'
 println "Querying: " + repoURL + "\n"
 
+fRepoOut = new File(userName + "-repos.csv")
+fRepoOut.write("repo, language, forks, stars\n")
+
 userRepos = getData(http, repoURL)
 
 userRepos.any { repo ->
@@ -73,10 +77,11 @@ userRepos.any { repo ->
         }
 
     println "Repo: " + repoName + " contributors: " + countContr
-    
+
+    fRepoOut.append(repoName + ',' + repo.language + ',' + repo.forks_count + ',' + repo.stargazers_count + "\n")
 }
 
-fOut = new File(userName + ".csv")
+fOut = new File(userName + "-contributors.csv")
 fOut.write("login, html-link\n")
 
 loginMap.each{
