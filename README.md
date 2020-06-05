@@ -2,7 +2,7 @@
 example how to get various stats out of github
 
 ## What does it do ?
-The script queries for all public repositories of given user/project. Next it iterates over each repository and lists number of contributors. At the end it writes the data to the csv file.
+The script queries for all public repositories of given user/project. Next it iterates over each repository and lists number of contributors and repository properties. At the end it writes the data to the csv files. It supports pagination now.
 
 ## Prerequisites 
 
@@ -24,22 +24,45 @@ After the token is generated it needs to be added to auth.properties
 ## Command line
 ```
 groovy ghstats.groovy deepres
-
 Querying: http://api.github.com/users/deepres/repos
+
 Repo: 30breaksaver contributors: 1
 Repo: 30breaksaver-ng contributors: 1
 Repo: dotfiles contributors: 1
 Repo: github-stats contributors: 1
 Repo: grails-doc contributors: 30
 Repo: OffsetDateTime-with-RestTemplate contributors: 1
-Logins succesfully exported to: deepres.csv file
-You have 4901 free requests left for next 60 minutes
+
+For deepres 6 repositories queried
+
+Data succesfully exported to:
+
+data/2020-06-05-deepres-repos.csv file
+data/2020-06-05-deepres-contributors.csv file
+
+You have 4669 free requests left for next 60 minutes
 ```
 
 ## CSV file contents
 
+### <>-repos.csv
+
 ```
-cat deepres.csv
+cat data/2020-06-05-deepres-repos.csv
+
+date, repo, language, contributors, forks, stars
+2020-06-05,30breaksaver,JavaScript,1,0,0
+2020-06-05,30breaksaver-ng,JavaScript,1,0,0
+2020-06-05,dotfiles,Shell,1,0,0
+2020-06-05,github-stats,Groovy,1,0,0
+2020-06-05,grails-doc,Groovy,30,0,0
+2020-06-05,OffsetDateTime-with-RestTemplate,Java,1,0,0
+```
+
+### <>-contributors.csv
+
+```
+cat data/2020-06-05-deepres-contributors.csv 
 
 login, html-link
 deepres,https://github.com/deepres
@@ -74,7 +97,5 @@ rosenfeld,https://github.com/rosenfeld
 kgeis,https://github.com/kgeis
 ZacharyKlein,https://github.com/ZacharyKlein
 ```
-
-
 
 

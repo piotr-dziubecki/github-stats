@@ -11,7 +11,7 @@ if (args.size() < 1) {
 
 def userName = args[0]
 def http = new HTTPBuilder()
-def userRepos
+def userRepos = []
 def loginMap = [:]
 
 
@@ -31,8 +31,10 @@ if ( authToken == null || authToken == "" ){
 }
 
 rateLimitCount = 0;
+pageCount = "";
+pattern = ~/page=(\d+)/
 
-def getData(HTTPBuilder http, String url) {
+def getData(HTTPBuilder http, String url, onlyHeaders = false) {
 
     def ur
     http.request( url, GET, JSON ) { req ->
@@ -42,8 +44,19 @@ def getData(HTTPBuilder http, String url) {
     headers.Accept = 'application/json'
 
     response.success = { resp, json ->
-     ur = json
-     rateLimitCount = resp.headers['X-RateLimit-Remaining'].value
+        if( onlyHeaders == false ){
+             ur = json
+             rateLimitCount = resp.headers['X-RateLimit-Remaining'].value
+        } else {
+            linkHeader = resp.headers['Link']
+
+            if( linkHeader != null){
+                def match = linkHeader.value =~ pattern
+                ur = match[1][1]
+            } else {
+                ur = 1;
+            }
+        }
     }
  
    response.failure = { resp ->
@@ -60,33 +73,54 @@ return ur
 repoURL = 'http://api.github.com/users/' + userName + '/repos'
 println "Querying: " + repoURL + "\n"
 
-fRepoOut = new File(userName + "-repos.csv")
-fRepoOut.write("repo, language, forks, stars\n")
 
-userRepos = getData(http, repoURL)
 
-userRepos.any { repo ->
-    String repoName =  repo.name
+pageCount = getData(http, repoURL, true)
 
-    def contributors = getData(http, 'https://api.github.com/repos/' + userName + '/' + repoName + '/contributors')
+userRepos.add(getData(http, repoURL) )
+for (int i = 2; i <= pageCount; ++i){
 
-    int countContr = 0;
-        contributors.each { contr -> 
-            loginMap.put(contr.login, contr.html_url)
-            countContr++;
-        }
-
-    println "Repo: " + repoName + " contributors: " + countContr
-
-    fRepoOut.append(repoName + ',' + repo.language + ',' + repo.forks_count + ',' + repo.stargazers_count + "\n")
+    repoURL = 'http://api.github.com/users/' + userName + '/repos?page=' + i
+    userRepos.add(getData(http, repoURL))
 }
 
-fOut = new File(userName + "-contributors.csv")
+saveDate = new Date().format( 'yyyy-MM-dd' )
+
+fRepoOut = new File("data/" + saveDate + "-" + userName + "-repos.csv")
+fRepoOut.write("date, repo, language, contributors, forks, stars\n")
+
+fOut = new File("data/" + saveDate + "-" + userName + "-contributors.csv")
 fOut.write("login, html-link\n")
+
+repoCounter = 0
+userRepos.each { repoEntry -> 
+    
+    repoEntry.each { repo ->
+        String repoName =  repo.name
+
+        def contributors = getData(http, 'https://api.github.com/repos/' + userName + '/' + repoName + '/contributors')
+
+        int countContr = 0;
+            contributors.each { contr -> 
+                loginMap.put(contr.login, contr.html_url)
+                countContr++;
+            }
+
+        println "Repo: " + repoName + " contributors: " + countContr
+        fRepoOut.append(saveDate + ',' + repoName + ',' + repo.language + ',' + countContr + ',' + repo.forks_count + ',' + repo.stargazers_count + "\n")
+        repoCounter++;
+    }
+}
+
+println "\nFor " + userName + " " + repoCounter + " repositories queried"
+
+
 
 loginMap.each{
     fOut.append(it.key + ',' + it.value + "\n")
 }
 
-println "\nData succesfully exported to: " + userName + ".csv file"
-println "You have " + rateLimitCount + " free requests left for next 60 minutes"
+println "\nData succesfully exported to:\n"
+println "data/" + saveDate + "-" + userName + "-repos.csv file"
+println "data/" + saveDate + "-" + userName + "-contributors.csv file"
+println "\nYou have " + rateLimitCount + " free requests left for next 60 minutes"
