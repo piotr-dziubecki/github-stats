@@ -75,7 +75,7 @@ println "Querying: " + repoURL + "\n"
 
 
 
-pageCount = getData(http, repoURL, true)
+int pageCount = getData(http, repoURL, true) as Integer
 
 userRepos.add(getData(http, repoURL) )
 for (int i = 2; i <= pageCount; ++i){
